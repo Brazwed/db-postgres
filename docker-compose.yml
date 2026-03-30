@@ -1,10 +1,8 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres
+    container_name: postgres_${COMPOSE_PROJECT_NAME:-default}
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASS}

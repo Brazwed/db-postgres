@@ -8,6 +8,17 @@ DATA_DIR="$DIR/data"
 
 cd "$DIR"
 
+check_docker() {
+    if ! command -v docker &>/dev/null; then
+        echo "[error] Docker not found. Install it first."
+        exit 1
+    fi
+    if ! docker info &>/dev/null; then
+        echo "[error] Docker daemon not running. Start it first."
+        exit 1
+    fi
+}
+
 load_env() {
     if [ ! -f .env ]; then
         cp .env.example .env
@@ -16,6 +27,26 @@ load_env() {
     set -a
     source .env
     set +a
+}
+
+wait_healthy() {
+    local container=$($COMPOSE ps -q postgres 2>/dev/null)
+    [ -z "$container" ] && return 1
+
+    echo -n "Waiting for $DB_NAME to be ready"
+    local retries=30
+    while [ $retries -gt 0 ]; do
+        local health=$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null || echo "starting")
+        if [ "$health" = "healthy" ]; then
+            echo " ready!"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+        retries=$((retries - 1))
+    done
+    echo " timeout!"
+    return 1
 }
 
 usage() {
@@ -32,14 +63,20 @@ usage() {
 }
 
 cmd_up() {
+    check_docker
     load_env
     $COMPOSE up -d
-    echo "[$DB_NAME] running on port $PG_PORT"
+    if wait_healthy; then
+        echo "[$DB_NAME] running on port $PG_PORT"
+    else
+        echo "[warn] $DB_NAME started but healthcheck didn't pass. Check: $COMPOSE logs"
+    fi
 }
 
 cmd_down() {
+    check_docker
     load_env
-    $COMPOSE down
+    $COMPOSE down --timeout 10
     echo "[$DB_NAME] stopped"
 }
 
@@ -57,19 +94,19 @@ cmd_status() {
 }
 
 cmd_shell() {
-    $COMPOSE exec postgres sh
+    $COMPOSE exec -it postgres sh
 }
 
 cmd_psql() {
     load_env
-    $COMPOSE exec postgres psql -U "$PG_USER" -d "$PG_DB"
+    $COMPOSE exec -it postgres psql -U "$PG_USER" -d "$PG_DB"
 }
 
 cmd_clean() {
     echo "This will delete all $DB_NAME data in $DATA_DIR/"
     read -p "Are you sure? [y/N] " confirm
     if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-        $COMPOSE down -v 2>/dev/null || true
+        $COMPOSE down -v --timeout 10 2>/dev/null || true
         rm -rf "$DATA_DIR"
         echo "[$DB_NAME] cleaned"
     else
