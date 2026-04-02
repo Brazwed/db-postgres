@@ -1,45 +1,30 @@
 # db-postgres
 
-PostgreSQL 16 Docker container pré-configurado. Pronto pra usar, sem conflitos.
+PostgreSQL 16 Docker container pre-configured. Ready to use, zero conflicts.
 
-## Uso rápido
+## Quick Start
 
 ```bash
-git clone https://github.com/seu-user/db-postgres.git
+git clone https://github.com/Brazwed/db-postgres.git
 cd db-postgres
-./start.sh up
-./info.sh
+docker compose up -d
 ```
 
-## Comandos
-
-| Comando | Descrição |
-|---------|-----------|
-| `./start.sh up` | Iniciar (cria .env automaticamente) |
-| `./start.sh down` | Parar |
-| `./start.sh restart` | Reiniciar |
-| `./start.sh logs` | Acompanhar logs |
-| `./start.sh status` | Status do container |
-| `./start.sh shell` | Shell no container |
-| `./start.sh psql` | Abrir psql |
-| `./start.sh clean` | Remover dados (com confirmação) |
-| `./info.sh` | Dados de conexão |
-
-## Conexão padrão
+## Default Connection
 
 ```
 Host:     localhost
-Porta:    5432
-Usuário:  postgres
-Senha:    postgres_dev_2026
-Banco:    devdb
+Port:     5432
+User:     postgres
+Pass:     postgres_dev_2026
+Database: devdb
 
 psql -h localhost -p 5432 -U postgres -d devdb
 ```
 
-## Configuração
+## Configuration
 
-Edite `.env` (criado automaticamente de `.env.example`):
+Edit `.env` (created automatically from `.env.example`):
 
 ```env
 PG_USER=postgres
@@ -48,6 +33,6 @@ PG_DB=devdb
 PG_PORT=5432
 ```
 
-## Parte do Database Toolkit
+## Part of Database Toolkit
 
-Este repositório pode ser usado standalone ou junto com outros bancos via [Database](https://github.com/seu-user/Database).
+This repo can be used standalone or with other databases via [Database Toolkit](https://github.com/Brazwed/Database).
